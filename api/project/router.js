@@ -1,34 +1,22 @@
-// build your `/api/projects` router here
-const db = require('../../data/dbConfig')
+const router = require('express').Router()
+const Project = require('./model')
 
-async function getProjects() {
-    const projects = await db('projects')
+router.get('/', (req, res, next) => {
+    Project.getProjects()
+        .then((projects) => {
+            res.json(projects)
+        })
+        .catch(next)
+})
 
-    return projects.map((project) => {
-        return {
-            ...project,
-            project_completed: project.project_completed === 1,
-        }
-    })
-}
-
-async function findById (id) {
-    const row = await db('projects')
-        .where('project_id', id)
-        .first();
-    return {
-        ...row, 
-        project_completed: row.project_completed ? true : false
+router.post('/', async (req, res, next) => {
+    try {
+        const project = await Project
+            .insert(req.body);
+        res.status(201).json(project)
+    } catch (err) {
+        next(err)
     }
-}
+})
 
-async function insert (project) {
-    const [id] = await db('projects')
-        .insert(project)
-    return findById(id)
-}
-
-module.exports = {
-    getProjects,
-    insert
-}
+module.exports = router
